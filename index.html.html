@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Legado — Calendario de Reservas</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f5f0e8; --paper:#fdfaf4; --ink:#1a1410; --ink-light:#6b5d4f; --border:#d4c9b5;
+    --f1:#c0392b; --f1-light:#fadbd8;
+    --f2:#1a6b8a; --f2-light:#d6eaf8;
+    --f3:#7d6608; --f3-light:#fef9e7;
+    --f4:#1e8449; --f4-light:#d5f5e3;
+    --libre:#27ae60; --libre-light:#eafaf1;
+    --comp:#6c3483; --comp-light:#f4ecf7;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;overflow:hidden;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;height:100%;}
+
+  header{background:var(--ink);color:var(--bg);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;flex-shrink:0;}
+  .logo h1{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;}
+  .logo p{font-size:9px;text-transform:uppercase;letter-spacing:3px;opacity:.5;margin-top:2px;}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+  .li{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:500;}
+  .ld{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+
+  /* sync indicator */
+  .sync-dot{width:8px;height:8px;border-radius:50%;background:#7f8c8d;flex-shrink:0;transition:background .4s;}
+  .sync-dot.ok{background:#27ae60;}
+  .sync-dot.err{background:#e74c3c;}
+  .sync-dot.loading{background:#f39c12;animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .sync-label{font-size:9px;opacity:.6;letter-spacing:.5px;}
+
+  .top-bar{background:var(--paper);border-bottom:1px solid var(--border);padding:7px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;}
+  .top-bar label{font-size:11px;font-weight:600;color:var(--ink-light);text-transform:uppercase;letter-spacing:1px;}
+  .fbts{display:flex;gap:5px;flex-wrap:wrap;}
+  .fbt{padding:4px 12px;border-radius:16px;border:2px solid;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;}
+  .fbt[data-fam="1"]{border-color:var(--f1);color:var(--f1);}
+  .fbt[data-fam="1"].active{background:var(--f1);color:#fff;}
+  .fbt[data-fam="2"]{border-color:var(--f2);color:var(--f2);}
+  .fbt[data-fam="2"].active{background:var(--f2);color:#fff;}
+  .fbt[data-fam="3"]{border-color:var(--f3);color:var(--f3);}
+  .fbt[data-fam="3"].active{background:var(--f3);color:#fff;}
+  .fbt[data-fam="4"]{border-color:var(--f4);color:var(--f4);}
+  .fbt[data-fam="4"].active{background:var(--f4);color:#fff;}
+  #vl{margin-left:auto;font-size:10px;color:var(--ink-light);font-style:italic;}
+
+  main{flex:1;overflow-y:auto;padding:20px 18px 50px;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;background:var(--paper);border:1px solid var(--border);border-radius:10px;padding:14px;}
+  .si{text-align:center;}
+  .sn{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;line-height:1;}
+  .sl{font-size:9px;color:var(--ink-light);margin-top:3px;text-transform:uppercase;letter-spacing:.8px;}
+  .si[data-fam="1"] .sn{color:var(--f1);}
+  .si[data-fam="2"] .sn{color:var(--f2);}
+  .si[data-fam="3"] .sn{color:var(--f3);}
+  .si[data-fam="4"] .sn{color:var(--f4);}
+
+  .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px;}
+
+  .mc{background:var(--paper);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+  .mh{padding:9px 14px;background:var(--ink);color:var(--bg);display:flex;justify-content:space-between;align-items:center;}
+  .mn{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;}
+  .my{font-size:10px;opacity:.45;letter-spacing:1px;}
+
+  .cg{padding:10px;}
+  .cdh{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:3px;}
+  .cdl{text-align:center;font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--ink-light);padding:2px 0;}
+  .cdl.wk{color:var(--ink);font-weight:700;}
+  .cc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
+  .cc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:11px;font-weight:500;cursor:default;position:relative;transition:all .15s;min-height:28px;}
+  .cc.empty{}
+  .cc.wd{color:var(--ink-light);}
+  .cc.we{font-weight:700;cursor:pointer;}
+  .cc.s-reservado{border-radius:0;}
+  .cc.r-start{border-radius:5px 0 0 5px;}
+  .cc.r-end{border-radius:0 5px 5px 0;}
+  .cc.r-solo{border-radius:5px;}
+  .cc[data-fam="1"].s-reservado{background:var(--f1-light);color:var(--f1);}
+  .cc[data-fam="2"].s-reservado{background:var(--f2-light);color:var(--f2);}
+  .cc[data-fam="3"].s-reservado{background:var(--f3-light);color:var(--f3);}
+  .cc[data-fam="4"].s-reservado{background:var(--f4-light);color:var(--f4);}
+  .cc.s-libre.we{background:var(--libre-light);color:var(--libre);}
+  .cc.s-liberado{background:var(--libre-light);color:var(--libre);}
+  .cc.s-compartido{background:var(--comp-light);color:var(--comp);font-size:9px;}
+  .cc.we:hover{filter:brightness(.92);transform:scale(1.06);z-index:2;}
+
+  .snote{background:var(--comp-light);border:1px dashed var(--comp);border-radius:5px;padding:6px 10px;margin:0 10px 8px;font-size:9px;color:var(--comp);font-weight:600;text-align:center;}
+
+  .wp{border-top:1px solid var(--border);padding:8px 10px;}
+  .wr{display:flex;align-items:center;justify-content:space-between;padding:5px 7px;border-radius:6px;margin-bottom:4px;gap:5px;}
+  .wr:last-child{margin-bottom:0;}
+  .wr[data-fam="1"]{background:var(--f1-light);}
+  .wr[data-fam="2"]{background:var(--f2-light);}
+  .wr[data-fam="3"]{background:var(--f3-light);}
+  .wr[data-fam="4"]{background:var(--f4-light);}
+  .wr.libre{background:var(--libre-light);}
+  .wr.comp{background:var(--comp-light);}
+  .wi{display:flex;flex-direction:column;gap:1px;flex:1;}
+  .wd2{font-size:10px;font-weight:700;}
+  .wf{font-size:9px;opacity:.7;}
+  .wtag{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:2px 6px;border-radius:7px;color:#fff;white-space:nowrap;}
+  .t-f1{background:var(--f1);}
+  .t-f2{background:var(--f2);}
+  .t-f3{background:var(--f3);}
+  .t-f4{background:var(--f4);}
+  .t-libre{background:var(--libre);}
+  .t-comp{background:var(--comp);}
+  .t-lib{background:#7f8c8d;}
+  .ba{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:2px 7px;border-radius:4px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap;}
+  .b-lib{background:#ecf0f1;color:#7f8c8d;}
+  .b-lib:hover{background:#bdc3c7;}
+  .b-rec{background:var(--f1);color:#fff;}
+
+  /* modal */
+  .mo{display:none;position:fixed;inset:0;background:rgba(26,20,16,.6);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+  .mo.active{display:flex;}
+  .mb{background:var(--paper);border-radius:12px;padding:24px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:mIn .22s ease;}
+  @keyframes mIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+  .mb h3{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;margin-bottom:6px;}
+  .mb p{font-size:12px;color:var(--ink-light);margin-bottom:14px;line-height:1.55;}
+  .mbd{background:var(--bg);border-radius:6px;padding:9px 12px;font-size:12px;font-weight:600;margin-bottom:14px;border:1px solid var(--border);}
+  .mac{display:flex;gap:8px;justify-content:flex-end;}
+  .bc{padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--ink-light);}
+  .bc:hover{background:var(--bg);}
+  .bco{padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;color:#fff;transition:all .15s;}
+  .bco.liberar{background:#7f8c8d;}
+  .bco.recuperar{background:var(--f1);}
+
+  .toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;z-index:2000;transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 6px 24px rgba(0,0,0,.25);}
+  .toast.v{transform:none;opacity:1;}
+
+  @media(max-width:560px){
+    header{padding:10px 14px;}
+    .top-bar{padding:6px 14px;}
+    main{padding:14px 10px 40px;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .mgrid{grid-template-columns:1fr;}
+    .legend{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><h1>El Legado</h1><p>Sistema de Reservas · 4 Familias</p></div>
+  <div class="legend">
+    <div class="li"><div class="ld" style="background:var(--f1)"></div>Familia 1</div>
+    <div class="li"><div class="ld" style="background:var(--f2)"></div>Familia 2</div>
+    <div class="li"><div class="ld" style="background:var(--f3)"></div>Familia 3</div>
+    <div class="li"><div class="ld" style="background:var(--f4)"></div>Familia 4</div>
+    <div class="li"><div class="ld" style="background:var(--libre)"></div>Libre</div>
+    <div class="li"><div class="ld" style="background:var(--comp)"></div>Compartido</div>
+    <div class="li"><div class="sync-dot loading" id="sync-dot"></div><span class="sync-label" id="sync-label">Conectando…</span></div>
+  </div>
+</header>
+
+<div class="top-bar">
+  <label>Soy:</label>
+  <div class="fbts">
+    <button class="fbt active" data-fam="1">Familia 1</button>
+    <button class="fbt" data-fam="2">Familia 2</button>
+    <button class="fbt" data-fam="3">Familia 3</button>
+    <button class="fbt" data-fam="4">Familia 4</button>
+  </div>
+  <span id="vl">Familia 1 · podés liberar tus fines de semana</span>
+</div>
+
+<main>
+  <div id="sb" class="stats"></div>
+  <div id="mg" class="mgrid"></div>
+</main>
+
+<div class="mo" id="mo">
+  <div class="mb">
+    <h3 id="mt">Liberar fin de semana</h3>
+    <p id="mp">Si liberás este fin de semana, quedará disponible para coordinación.</p>
+    <div class="mbd" id="md"></div>
+    <div class="mac">
+      <button class="bc" onclick="closeM()">Cancelar</button>
+      <button class="bco" id="bca" onclick="confirmA()">Confirmar</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, onValue, set, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+// ── CONFIG ──
+const firebaseConfig = {
+  databaseURL: 'https://el-legado-625de-default-rtdb.firebaseio.com'
+};
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+// ── STATE ──
+const FAM = {
+  1:{n:'Familia 1',t:'t-f1'},
+  2:{n:'Familia 2',t:'t-f2'},
+  3:{n:'Familia 3',t:'t-f3'},
+  4:{n:'Familia 4',t:'t-f4'},
+};
+let cur  = 1;
+let pend = null;
+let OV   = {};   // overrides from Firebase: { key: 'liberado' }
+
+// ── SYNC STATUS ──
+function setSyncStatus(status) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'sync-dot ' + status;
+  lbl.textContent = status === 'ok' ? 'Sincronizado' : status === 'err' ? 'Sin conexión' : 'Conectando…';
+}
+
+// ── FIREBASE LISTENER ──
+const ovRef = ref(db, 'overrides');
+onValue(ovRef, snap => {
+  OV = snap.val() || {};
+  setSyncStatus('ok');
+  render();
+}, err => {
+  console.error(err);
+  setSyncStatus('err');
+});
+
+// ── WRITE TO FIREBASE ──
+async function fbSet(key, value) {
+  await set(ref(db, 'overrides/' + key), value);
+}
+async function fbDel(key) {
+  await remove(ref(db, 'overrides/' + key));
+}
+
+// ── DATE HELPERS ──
+function getMonths() {
+  const out = []; let y = 2026, m = 6;
+  for (let i = 0; i < 12; i++) { out.push({y, m}); m++; if (m > 11) { m = 0; y++; } }
+  return out;
+}
+const MN = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+function dim(y,m) { return new Date(y,m+1,0).getDate(); }
+function fdm(y,m) { return new Date(y,m,1).getDay(); }
+function fmt(d)   { if(!d) return ''; return d.getDate()+' '+['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()]; }
+
+function getWEs(y, m) {
+  const n = dim(y,m), wes = [];
+  for (let d = 1; d <= n; d++) {
+    if (new Date(y,m,d).getDay() === 6) {
+      const s2 = new Date(y,m,d+1);
+      wes.push({ sat: new Date(y,m,d), sun: s2.getMonth()===m?s2:null, sd:d, su: s2.getMonth()===m?d+1:null });
+    }
+  }
+  return wes.map((w,i) => ({...w, n:i+1, tot:wes.length}));
+}
+
+function isShared(date) {
+  const y=date.getFullYear(), m=date.getMonth(), d=date.getDate();
+  if(y===2026&&m===6&&d>=11&&d<=20) return 'Vacaciones Julio';
+  if(y===2026&&m===8&&d>=27)        return 'Vacaciones Setiembre';
+  if(y===2026&&m===9&&d<=5)         return 'Vacaciones Setiembre';
+  if(y===2026&&m===11&&d>=23)       return 'Fin de Año';
+  if(y===2027&&m===0&&d<=7)         return 'Año Nuevo';
+  if(y===2027&&m===2&&d>=28)        return 'Semana Santa';
+  if(y===2027&&m===3&&d<=4)         return 'Semana Santa';
+  return null;
+}
+function weShared(we) { return isShared(we.sat) || (we.sun ? isShared(we.sun) : null); }
+function wKey(we)     { return `${we.sat.getFullYear()}_${we.sat.getMonth()}_${we.sd}`; }
+
+function assign(we) {
+  if (we.tot === 5 && we.n === 5) return null;
+  return we.n <= 4 ? we.n : null;
+}
+function wState(we) {
+  const sh = weShared(we);
+  if (sh) return { tp:'compartido', lb:sh, fam:null };
+  const f = assign(we);
+  if (!f) return { tp:'libre', lb:'Libre · 5° fin de semana', fam:null };
+  const ov = OV[wKey(we)];
+  if (ov === 'liberado') return { tp:'liberado', lb:'Liberado', fam:f };
+  return { tp:'reservado', lb:FAM[f].n, fam:f };
+}
+
+// ── RENDER ──
+function renderStats() {
+  const cnt = {1:0,2:0,3:0,4:0};
+  getMonths().forEach(({y,m}) => getWEs(y,m).forEach(we => {
+    const s = wState(we); if (s.tp === 'reservado') cnt[s.fam]++;
+  }));
+  document.getElementById('sb').innerHTML = [1,2,3,4].map(f =>
+    `<div class="si" data-fam="${f}"><div class="sn">${cnt[f]}</div><div class="sl">${FAM[f].n}<br>fines de semana</div></div>`
+  ).join('');
+}
+
+function renderMonths() {
+  const grid = document.getElementById('mg');
+  grid.innerHTML = '';
+  getMonths().forEach(({y, m}) => {
+    const wes = getWEs(y, m);
+    const nd = dim(y,m), off = (fdm(y,m)+6)%7;
+    const byd = {};
+    wes.forEach(we => { byd[we.sd] = we; if (we.su) byd[we.su] = we; });
+
+    const hdr = ['Lu','Ma','Mi','Ju','Vi','Sá','Do']
+      .map((l,i) => `<div class="cdl ${i>=5?'wk':''}">${l}</div>`).join('');
+
+    let cells = '';
+    for (let i = 0; i < off; i++) cells += `<div class="cc empty"></div>`;
+    for (let d = 1; d <= nd; d++) {
+      const dow = new Date(y,m,d).getDay();
+      const isWE = dow===0 || dow===6;
+      if (!isWE) { cells += `<div class="cc wd">${d}</div>`; continue; }
+      const we = byd[d], st = wState(we);
+      const isSat = dow === 6;
+      const rc = isSat ? (we.su ? 'r-start' : 'r-solo') : 'r-end';
+      const fa = st.fam ? `data-fam="${st.fam}"` : '';
+      const can = (st.tp==='reservado'||st.tp==='liberado') && st.fam===cur;
+      const cl = can ? `onclick="handleClick('${wKey(we)}')"` : '';
+      cells += `<div class="cc we s-${st.tp} ${rc}" ${fa} ${cl} title="${st.lb}">${d}</div>`;
+    }
+
+    let rows = '';
+    wes.forEach(we => {
+      const st = wState(we), f = st.fam;
+      const rc2 = st.tp==='compartido' ? 'comp' : (st.tp==='libre'||st.tp==='liberado') ? 'libre' : '';
+      const fa2 = f ? `data-fam="${f}"` : '';
+      const tc  = st.tp==='compartido'?'t-comp':st.tp==='libre'?'t-libre':st.tp==='liberado'?'t-lib':f?FAM[f].t:'t-f1';
+      const tl  = st.tp==='reservado'?'Reservado':st.tp==='liberado'?'Liberado':st.tp==='libre'?'Libre':'Compartido';
+      let btn = '';
+      if (st.tp==='reservado' && f===cur)
+        btn = `<button class="ba b-lib" onclick="handleClick('${wKey(we)}')">Liberar</button>`;
+      else if (st.tp==='liberado' && f===cur)
+        btn = `<button class="ba b-rec" onclick="handleClick('${wKey(we)}')">Recuperar</button>`;
+      rows += `<div class="wr ${rc2}" ${fa2}>
+        <div class="wi"><div class="wd2">Sáb ${fmt(we.sat)}${we.sun?' — Dom '+fmt(we.sun):''}</div><div class="wf">${st.lb}</div></div>
+        <span class="wtag ${tc}">${tl}</span>${btn}
+      </div>`;
+    });
+
+    const hs = wes.some(we => weShared(we));
+    const sn = hs ? `<div class="snote">🏡 Período compartido — todas las familias pueden coincidir</div>` : '';
+
+    const card = document.createElement('div');
+    card.className = 'mc';
+    card.innerHTML = `
+      <div class="mh"><span class="mn">${MN[m]}</span><span class="my">${y}</span></div>
+      <div class="cg"><div class="cdh">${hdr}</div><div class="cc-grid">${cells}</div></div>
+      ${sn}<div class="wp">${rows}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+function render() {
+  renderStats();
+  renderMonths();
+  document.getElementById('vl').textContent = `${FAM[cur].n} · podés liberar o recuperar tus fines de semana`;
+}
+
+// ── ACTIONS ──
+window.handleClick = function(key) {
+  const pts = key.split('_');
+  const ky = parseInt(pts[0]), km = parseInt(pts[1]), kd = parseInt(pts[2]);
+  const we = getWEs(ky, km).find(w => w.sd === kd);
+  if (!we) return;
+  const st = wState(we);
+  if (st.fam !== cur || (st.tp !== 'reservado' && st.tp !== 'liberado')) return;
+  pend = {key, we, st};
+  if (st.tp === 'reservado') {
+    document.getElementById('mt').textContent = 'Liberar este fin de semana';
+    document.getElementById('mp').textContent = 'Quedará disponible para las otras familias. Podés recuperarlo si nadie lo usa.';
+    document.getElementById('bca').textContent = 'Liberar';
+    document.getElementById('bca').className = 'bco liberar';
+  } else {
+    document.getElementById('mt').textContent = 'Recuperar este fin de semana';
+    document.getElementById('mp').textContent = 'Vas a marcarlo nuevamente como reservado para tu familia.';
+    document.getElementById('bca').textContent = 'Recuperar';
+    document.getElementById('bca').className = 'bco recuperar';
+  }
+  document.getElementById('md').textContent = `Sáb ${fmt(we.sat)}${we.sun?' — Dom '+fmt(we.sun):''}`;
+  document.getElementById('mo').classList.add('active');
+};
+
+window.closeM = function() {
+  document.getElementById('mo').classList.remove('active');
+  pend = null;
+};
+
+window.confirmA = async function() {
+  if (!pend) return;
+  const {key, st} = pend;
+  closeM();
+  setSyncStatus('loading');
+  try {
+    if (st.tp === 'reservado') { await fbSet(key, 'liberado'); showToast('✅ Fin de semana liberado'); }
+    else                       { await fbDel(key);             showToast('🔒 Fin de semana recuperado'); }
+  } catch(e) {
+    setSyncStatus('err');
+    showToast('❌ Error al guardar — revisá tu conexión');
+  }
+  pend = null;
+};
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('v');
+  setTimeout(() => t.classList.remove('v'), 3000);
+}
+
+// ── FAMILIA SELECTOR ──
+document.querySelectorAll('.fbt').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.fbt').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    cur = parseInt(b.dataset.fam);
+    render();
+  });
+});
+
+document.getElementById('mo').addEventListener('click', e => {
+  if (e.target === document.getElementById('mo')) closeM();
+});
+
+// Initial render while Firebase loads
+render();
+</script>
+</body>
+</html>
