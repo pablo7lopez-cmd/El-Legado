@@ -59,7 +59,9 @@
   .si[data-fam="3"] .sn{color:var(--f3);}
   .si[data-fam="4"] .sn{color:var(--f4);}
 
-  .mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  .mgrid{display:block;width:100%;}
+  .mrow{display:flex;gap:16px;margin-bottom:16px;width:100%;}
+  .mrow .mc{flex:1;min-width:0;}
 
   .mc{background:var(--paper);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);}
   .mh{padding:9px 14px;background:var(--ink);color:var(--bg);display:flex;justify-content:space-between;align-items:center;}
@@ -138,7 +140,7 @@
     .top-bar{padding:6px 14px;}
     main{padding:14px 10px 40px;}
     .stats{grid-template-columns:repeat(2,1fr);}
-    .mgrid{grid-template-columns:1fr;}
+    .mrow{flex-direction:column;}
     .legend{display:none;}
   }
 </style>
@@ -301,7 +303,10 @@ function renderStats() {
 function renderMonths() {
   const grid = document.getElementById('mg');
   grid.innerHTML = '';
-  getMonths().forEach(({y, m}) => {
+  const months = getMonths();
+  
+  // Build all 12 month cards first
+  const cards = months.map(({y, m}) => {
     const wes = getWEs(y, m);
     const nd = dim(y,m), off = (fdm(y,m)+6)%7;
     const byd = {};
@@ -346,14 +351,24 @@ function renderMonths() {
     const hs = wes.some(we => weShared(we));
     const sn = hs ? `<div class="snote">🏡 Período compartido — todas las familias pueden coincidir</div>` : '';
 
-    const card = document.createElement('div');
-    card.className = 'mc';
-    card.innerHTML = `
+    const div = document.createElement('div');
+    div.className = 'mc';
+    div.innerHTML = `
       <div class="mh"><span class="mn">${MN[m]}</span><span class="my">${y}</span></div>
       <div class="cg"><div class="cdh">${hdr}</div><div class="cc-grid">${cells}</div></div>
       ${sn}<div class="wp">${rows}</div>`;
-    grid.appendChild(card);
+    return div;
   });
+
+  // Arrange into rows of 4
+  for (let i = 0; i < cards.length; i += 4) {
+    const row = document.createElement('div');
+    row.className = 'mrow';
+    for (let j = i; j < Math.min(i + 4, cards.length); j++) {
+      row.appendChild(cards[j]);
+    }
+    grid.appendChild(row);
+  }
 }
 
 function render() {
