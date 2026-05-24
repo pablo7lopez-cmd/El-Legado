@@ -208,7 +208,6 @@ db.ref('overrides').on('value', function(snap) {
 }, function(err) {
   console.error(err);
   setSyncStatus('err');
-  render();
 });
 
 // ── DATE HELPERS ──
