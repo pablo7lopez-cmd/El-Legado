@@ -67,6 +67,11 @@
   .cc[data-fam="4"].s-reservado{background:var(--f4-light);color:var(--f4);}
   .cc.s-libre.we{background:var(--libre-light);color:var(--libre);}
   .cc.s-liberado{background:var(--libre-light);color:var(--libre);}
+  .cc.s-tomado{border-radius:0;}
+  .cc[data-fam="1"].s-tomado{background:var(--f1-light);color:var(--f1);}
+  .cc[data-fam="2"].s-tomado{background:var(--f2-light);color:var(--f2);}
+  .cc[data-fam="3"].s-tomado{background:var(--f3-light);color:var(--f3);}
+  .cc[data-fam="4"].s-tomado{background:var(--f4-light);color:var(--f4);}
   .cc.s-compartido{background:var(--comp-light);color:var(--comp);font-size:9px;}
   .cc.we:hover{filter:brightness(.92);transform:scale(1.06);z-index:2;}
   .snote{background:var(--comp-light);border:1px dashed var(--comp);border-radius:5px;padding:6px 10px;margin:0 10px 8px;font-size:9px;color:var(--comp);font-weight:600;text-align:center;}
@@ -83,6 +88,11 @@
   .t-libre{background:var(--libre);} .t-comp{background:var(--comp);} .t-lib{background:#7f8c8d;}
   .ba{font-size:8px;font-weight:700;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
   .b-lib{background:#ecf0f1;color:#7f8c8d;} .b-rec{background:var(--f1);color:#fff;}
+  .b-tom{background:var(--libre);color:#fff;}
+  .b-voy{background:var(--comp);color:#fff;}
+  .b-nov{background:#ecf0f1;color:#7f8c8d;}
+  .going-dots{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle;}
+  .fdot{display:inline-block;width:10px;height:10px;border-radius:50%;}
   .mo{display:none;position:fixed;inset:0;background:rgba(26,20,16,.6);z-index:1000;align-items:center;justify-content:center;padding:20px;}
   .mo.active{display:flex;}
   .mb{background:var(--paper);border-radius:12px;padding:24px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);}
@@ -222,8 +232,12 @@ function wState(we){
   var f=assign(we);
   if(!f)return{tp:'libre',lb:'Libre - 5 fin de semana',fam:null};
   var ov=OV[wKey(we)];
-  if(ov==='liberado')return{tp:'liberado',lb:'Liberado',fam:f};
-  return{tp:'reservado',lb:FAM[f].n,fam:f};
+  if(ov==='liberado')return{tp:'liberado',lb:'Liberado por '+FAM[f].n,fam:f,owner:f};
+  if(ov&&ov.indexOf('tomado_')===0){
+    var takenBy=parseInt(ov.split('_')[1]);
+    return{tp:'tomado',lb:'Tomado por '+FAM[takenBy].n,fam:takenBy,owner:f};
+  }
+  return{tp:'reservado',lb:FAM[f].n,fam:f,owner:f};
 }
 
 function renderStats(){
@@ -268,10 +282,27 @@ function buildMonthCard(y, m){
     var rc2=st.tp==='compartido'?'comp':(st.tp==='libre'||st.tp==='liberado')?'libre':'';
     var fa2=f?'data-fam="'+f+'"':'';
     var tc=st.tp==='compartido'?'t-comp':st.tp==='libre'?'t-libre':st.tp==='liberado'?'t-lib':f?FAM[f].t:'t-f1';
-    var tl=st.tp==='reservado'?'Reservado':st.tp==='liberado'?'Liberado':st.tp==='libre'?'Libre':'Compartido';
+    var tl=st.tp==='reservado'?'Reservado':st.tp==='liberado'?'Liberado':st.tp==='libre'?'Libre':st.tp==='tomado'?'Tomado':'Compartido';
     var btn='';
     if(st.tp==='reservado'&&f===cur)btn='<button class="ba b-lib" onclick="handleClick(\''+wKey(we)+'\')">Liberar</button>';
     else if(st.tp==='liberado'&&f===cur)btn='<button class="ba b-rec" onclick="handleClick(\''+wKey(we)+'\')">Recuperar</button>';
+    else if(st.tp==='liberado'&&f!==cur)btn='<button class="ba b-tom" onclick="handleClick(\''+wKey(we)+'\')">Tomar</button>';
+    else if(st.tp==='tomado'&&st.owner===cur)btn='<button class="ba b-rec" onclick="handleClick(\''+wKey(we)+'\')">Recuperar</button>';
+    else if(st.tp==='tomado'&&f===cur)btn='<button class="ba b-lib" onclick="handleClick(\''+wKey(we)+'\')">Liberar</button>';
+
+    if(st.tp==='compartido'){
+      var shKey='sh_'+wKey(we);
+      var goingData=OV[shKey]||{};
+      var goingDots=[1,2,3,4].map(function(fid){
+        var going=goingData['f'+fid];
+        return '<span class="fdot '+(going?'on':'off')+'" style="background:'+(going?['','#c0392b','#1a6b8a','#7d6608','#1e8449'][fid]:'#ccc')+'" title="'+FAM[fid].n+(going?' - Va':' - No confirmado')+'"></span>';
+      }).join('');
+      var iGoing=goingData['f'+cur];
+      btn='<button class="ba '+(iGoing?'b-nov':'b-voy')+'" onclick="handleShared(\''+shKey+'\','+(iGoing?'false':'true')+')">'+( iGoing?'No voy':'Voy')+'</button>';
+      rows+='<div class="wr comp"><div class="wi"><div class="wd2">Sab '+fmt(we.sat)+(we.sun?' - Dom '+fmt(we.sun):'')+'</div><div class="wf">'+st.lb+'<span class="going-dots">'+goingDots+'</span></div></div>'+btn+'</div>';
+      return;
+    }
+
     rows+='<div class="wr '+rc2+'" '+fa2+'><div class="wi"><div class="wd2">Sab '+fmt(we.sat)+(we.sun?' - Dom '+fmt(we.sun):'')+'</div><div class="wf">'+st.lb+'</div></div><span class="wtag '+tc+'">'+tl+'</span>'+btn+'</div>';
   });
 
@@ -303,6 +334,16 @@ function render(){
   document.getElementById('vl').textContent=FAM[cur].n+' - podes liberar o recuperar tus fines de semana';
 }
 
+function handleShared(shKey, going) {
+  setSyncStatus('loading');
+  var url = DB + '/overrides/' + shKey + '/f' + cur + '.json';
+  var method = going ? 'PUT' : 'DELETE';
+  var body = going ? 'true' : null;
+  fetch(url, {method:method, body:body})
+    .then(function(){ fbFetch(); showToast(going ? 'Confirmado - Voy!' : 'Quitada tu confirmacion'); })
+    .catch(function(){ setSyncStatus('err'); showToast('Error al guardar'); });
+}
+
 function handleClick(key){
   var pts=key.split('_');
   var ky=parseInt(pts[0]),km=parseInt(pts[1]),kd=parseInt(pts[2]);
@@ -310,19 +351,35 @@ function handleClick(key){
   for(var i=0;i<wes.length;i++){if(wes[i].sd===kd){we=wes[i];break;}}
   if(!we)return;
   var st=wState(we);
-  if(st.fam!==cur||(st.tp!=='reservado'&&st.tp!=='liberado'))return;
   pend={key:key,we:we,st:st};
-  if(st.tp==='reservado'){
+
+  if(st.tp==='reservado'&&st.fam===cur){
     document.getElementById('mt').textContent='Liberar este fin de semana';
-    document.getElementById('mp').textContent='Quedara disponible para las otras familias.';
+    document.getElementById('mp').textContent='Quedara disponible para las otras familias. Podés recuperarlo si nadie lo toma.';
     document.getElementById('bca').textContent='Liberar';
     document.getElementById('bca').className='bco liberar';
-  } else {
+  } else if(st.tp==='liberado'&&st.fam===cur){
     document.getElementById('mt').textContent='Recuperar este fin de semana';
     document.getElementById('mp').textContent='Volvera a estar reservado para tu familia.';
     document.getElementById('bca').textContent='Recuperar';
     document.getElementById('bca').className='bco recuperar';
-  }
+  } else if(st.tp==='liberado'&&st.fam!==cur){
+    document.getElementById('mt').textContent='Tomar este fin de semana';
+    document.getElementById('mp').textContent='Lo reservas para tu familia. Se pintara con tu color.';
+    document.getElementById('bca').textContent='Tomar';
+    document.getElementById('bca').className='bco recuperar';
+  } else if(st.tp==='tomado'&&st.owner===cur){
+    document.getElementById('mt').textContent='Recuperar este fin de semana';
+    document.getElementById('mp').textContent='Lo volvés a marcar como liberado, disponible para otras familias.';
+    document.getElementById('bca').textContent='Recuperar';
+    document.getElementById('bca').className='bco liberar';
+  } else if(st.tp==='tomado'&&st.fam===cur){
+    document.getElementById('mt').textContent='Liberar este fin de semana';
+    document.getElementById('mp').textContent='Lo marcas como disponible nuevamente.';
+    document.getElementById('bca').textContent='Liberar';
+    document.getElementById('bca').className='bco liberar';
+  } else { return; }
+
   document.getElementById('md').textContent='Sab '+fmt(we.sat)+(we.sun?' - Dom '+fmt(we.sun):'');
   document.getElementById('mo').classList.add('active');
 }
@@ -333,10 +390,21 @@ function confirmA(){
   if(!pend)return;
   var key=pend.key,st=pend.st;
   closeM();setSyncStatus('loading');
-  var promise=st.tp==='reservado'?fbSet(key,'liberado'):fbDel(key);
+  var promise;
+  if(st.tp==='reservado'){
+    promise=fbSet(key,'liberado');
+  } else if(st.tp==='liberado'&&st.fam===cur){
+    promise=fbDel(key);
+  } else if(st.tp==='liberado'&&st.fam!==cur){
+    promise=fbSet(key,'tomado_'+cur);
+  } else if(st.tp==='tomado'&&st.owner===cur){
+    promise=fbSet(key,'liberado');
+  } else if(st.tp==='tomado'&&st.fam===cur){
+    promise=fbDel(key);
+  } else { return; }
   promise.then(function(){
     fbFetch();
-    showToast(st.tp==='reservado'?'Fin de semana liberado':'Fin de semana recuperado');
+    showToast(st.tp==='liberado'&&st.fam!==cur?'Fin de semana tomado!':'Listo');
   }).catch(function(){setSyncStatus('err');showToast('Error al guardar');});
   pend=null;
 }
