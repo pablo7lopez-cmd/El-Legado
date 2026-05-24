@@ -313,7 +313,7 @@ function renderMonths() {
     wes.forEach(we => { byd[we.sd] = we; if (we.su) byd[we.su] = we; });
 
     const hdr = ['Lu','Ma','Mi','Ju','Vi','Sá','Do']
-      .map((l,i) => `<div class="cdl ${i>=5?'wk':''}">${l}</div>`).join('');
+      .map((l,idx) => `<div class="cdl ${idx>=5?'wk':''}">${l}</div>`).join('');
 
     let cells = '';
     for (let i = 0; i < off; i++) cells += `<div class="cc empty"></div>`;
@@ -361,11 +361,11 @@ function renderMonths() {
   });
 
   // Arrange into rows of 4
-  for (let i = 0; i < cards.length; i += 4) {
+  for (let r = 0; r < cards.length; r += 4) {
     const row = document.createElement('div');
     row.className = 'mrow';
-    for (let j = i; j < Math.min(i + 4, cards.length); j++) {
-      row.appendChild(cards[j]);
+    for (let c = r; c < Math.min(r + 4, cards.length); c++) {
+      row.appendChild(cards[c]);
     }
     grid.appendChild(row);
   }
