@@ -114,10 +114,10 @@
 <header>
   <div class="logo"><h1>El Legado</h1><p>Sistema de Reservas · 4 Familias</p></div>
   <div class="legend">
-    <div class="li"><div class="ld" style="background:var(--f1)"></div>Familia 1</div>
-    <div class="li"><div class="ld" style="background:var(--f2)"></div>Familia 2</div>
-    <div class="li"><div class="ld" style="background:var(--f3)"></div>Familia 3</div>
-    <div class="li"><div class="ld" style="background:var(--f4)"></div>Familia 4</div>
+    <div class="li"><div class="ld" style="background:var(--f1)"></div>Fede y Lala</div>
+    <div class="li"><div class="ld" style="background:var(--f2)"></div>Pablo y Lore</div>
+    <div class="li"><div class="ld" style="background:var(--f3)"></div>Javier y Vero</div>
+    <div class="li"><div class="ld" style="background:var(--f4)"></div>Gaston y Vicky</div>
     <div class="li"><div class="ld" style="background:var(--libre)"></div>Libre</div>
     <div class="li"><div class="ld" style="background:var(--comp)"></div>Compartido</div>
     <div class="li"><div class="sync-dot loading" id="sync-dot"></div><span class="sync-label" id="sync-label">Conectando...</span></div>
@@ -126,10 +126,10 @@
 <div class="top-bar">
   <label>Soy:</label>
   <div class="fbts">
-    <button class="fbt active" data-fam="1">Familia 1</button>
-    <button class="fbt" data-fam="2">Familia 2</button>
-    <button class="fbt" data-fam="3">Familia 3</button>
-    <button class="fbt" data-fam="4">Familia 4</button>
+    <button class="fbt active" data-fam="1">Fede y Lala</button>
+    <button class="fbt" data-fam="2">Pablo y Lore</button>
+    <button class="fbt" data-fam="3">Javier y Vero</button>
+    <button class="fbt" data-fam="4">Gaston y Vicky</button>
   </div>
   <span id="vl">Familia 1 · podés liberar tus fines de semana</span>
 </div>
@@ -152,7 +152,7 @@
 
 <script>
 var DB = 'https://el-legado-625de-default-rtdb.firebaseio.com';
-var FAM = {1:{n:'Familia 1',t:'t-f1'},2:{n:'Familia 2',t:'t-f2'},3:{n:'Familia 3',t:'t-f3'},4:{n:'Familia 4',t:'t-f4'}};
+var FAM = {1:{n:'Fede y Lala',t:'t-f1'},2:{n:'Pablo y Lore',t:'t-f2'},3:{n:'Javier y Vero',t:'t-f3'},4:{n:'Gaston y Vicky',t:'t-f4'}};
 var MN = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 var cur = 1, pend = null, OV = {};
 
