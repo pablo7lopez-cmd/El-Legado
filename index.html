@@ -32,11 +32,15 @@
   .top-bar{background:var(--paper);border-bottom:1px solid var(--border);padding:7px 24px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:nowrap;overflow-x:auto;}
   .top-bar label{font-size:11px;font-weight:600;color:var(--ink-light);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;}
   .fbts{display:flex;gap:5px;flex-wrap:wrap;}
-  .fbt{padding:4px 12px;border-radius:16px;border:2px solid;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;}
-  .fbt[data-fam="1"]{border-color:var(--f1);color:var(--f1);} .fbt[data-fam="1"].active{background:var(--f1);color:#fff;}
-  .fbt[data-fam="2"]{border-color:var(--f2);color:var(--f2);} .fbt[data-fam="2"].active{background:var(--f2);color:#fff;}
-  .fbt[data-fam="3"]{border-color:var(--f3);color:var(--f3);} .fbt[data-fam="3"].active{background:var(--f3);color:#fff;}
-  .fbt[data-fam="4"]{border-color:var(--f4);color:var(--f4);} .fbt[data-fam="4"].active{background:var(--f4);color:#fff;}
+  .fbt{padding:4px 12px;border-radius:16px;border:2px solid;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;}
+  .fbt[data-fam="1"]{border-color:var(--f1);background:var(--f1);color:#fff;}
+  .fbt[data-fam="1"].active{background:var(--f1);color:#fff;box-shadow:0 0 0 3px rgba(192,57,43,.35);}
+  .fbt[data-fam="2"]{border-color:var(--f2);background:var(--f2);color:#fff;}
+  .fbt[data-fam="2"].active{background:var(--f2);color:#fff;box-shadow:0 0 0 3px rgba(26,107,138,.35);}
+  .fbt[data-fam="3"]{border-color:var(--f3);background:var(--f3);color:#fff;}
+  .fbt[data-fam="3"].active{background:var(--f3);color:#fff;box-shadow:0 0 0 3px rgba(125,102,8,.35);}
+  .fbt[data-fam="4"]{border-color:var(--f4);background:var(--f4);color:#fff;}
+  .fbt[data-fam="4"].active{background:var(--f4);color:#fff;box-shadow:0 0 0 3px rgba(30,132,73,.35);}
   #vl{margin-left:auto;font-size:10px;color:var(--ink-light);font-style:italic;}
   main{flex:1;padding:20px 18px 50px;}
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;background:var(--paper);border:1px solid var(--border);border-radius:10px;padding:14px;}
