@@ -211,11 +211,15 @@ function getWEs(y,m){
 
 function isShared(date){
   var y=date.getFullYear(),m=date.getMonth(),d=date.getDate();
-  if(y===2026&&m===6&&d>=11&&d<=20)return 'Vacaciones Julio';
-  if(y===2026&&m===8&&d>=27)return 'Vacaciones Setiembre';
-  if(y===2026&&m===9&&d<=5)return 'Vacaciones Setiembre';
+  // Vacaciones invierno: 27 jun - 12 jul 2026
+  if(y===2026&&m===5&&d>=27)return 'Vacaciones Invierno';
+  if(y===2026&&m===6&&d<=12)return 'Vacaciones Invierno';
+  // Vacaciones primavera: 19 - 27 sep 2026
+  if(y===2026&&m===8&&d>=19&&d<=27)return 'Vacaciones Primavera';
+  // Fin de año: 23 dic 2026 - 7 ene 2027
   if(y===2026&&m===11&&d>=23)return 'Fin de Año';
   if(y===2027&&m===0&&d<=7)return 'Año Nuevo';
+  // Semana Santa 2027: 28 mar - 4 abr
   if(y===2027&&m===2&&d>=28)return 'Semana Santa';
   if(y===2027&&m===3&&d<=4)return 'Semana Santa';
   return null;
