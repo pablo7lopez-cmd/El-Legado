@@ -274,7 +274,7 @@ function wState(we){
   var sh=weShared(we);
   if(sh)return{tp:'compartido',lb:sh,fam:null};
   var f=assign(we);
-  if(!f)return{tp:'libre',lb:'Libre - 5 fin de semana',fam:null};
+  if(!f) return wStateFree(we);
   var ov=OV[wKey(we)];
   if(ov==='liberado')return{tp:'liberado',lb:'Liberado por '+FAM[f].n,fam:f,owner:f};
   if(ov&&ov.indexOf('tomado_')===0){
@@ -282,6 +282,16 @@ function wState(we){
     return{tp:'tomado',lb:'Tomado por '+FAM[takenBy].n,fam:takenBy,owner:f};
   }
   return{tp:'reservado',lb:FAM[f].n,fam:f,owner:f};
+}
+
+function wStateFree(we){
+  // For libre (5th) weekends that may have been taken
+  var ov=OV[wKey(we)];
+  if(ov&&ov.indexOf('tomado_')===0){
+    var takenBy=parseInt(ov.split('_')[1]);
+    return{tp:'tomado',lb:'Reservado por '+FAM[takenBy].n,fam:takenBy,owner:null};
+  }
+  return{tp:'libre',lb:'Libre - 5 fin de semana',fam:null};
 }
 
 function renderStats(){
@@ -331,6 +341,7 @@ function buildMonthCard(y, m){
     if(st.tp==='reservado'&&f===cur)btn='<button class="ba b-lib" onclick="handleClick(\''+wKey(we)+'\')">Liberar</button>';
     else if(st.tp==='liberado'&&f===cur)btn='<button class="ba b-rec" onclick="handleClick(\''+wKey(we)+'\')">Recuperar</button>';
     else if(st.tp==='liberado'&&f!==cur)btn='<button class="ba b-tom" onclick="handleClick(\''+wKey(we)+'\')">Tomar</button>';
+    else if(st.tp==='libre')btn='<button class="ba b-tom" onclick="handleClick(\''+wKey(we)+'\')">Reservar</button>';
     else if(st.tp==='tomado'&&st.owner===cur)btn='<button class="ba b-rec" onclick="handleClick(\''+wKey(we)+'\')">Recuperar</button>';
     else if(st.tp==='tomado'&&f===cur)btn='<button class="ba b-lib" onclick="handleClick(\''+wKey(we)+'\')">Liberar</button>';
 
@@ -412,6 +423,11 @@ function handleClick(key){
     document.getElementById('mp').textContent='Lo reservas para tu familia. Se pintara con tu color.';
     document.getElementById('bca').textContent='Tomar';
     document.getElementById('bca').className='bco recuperar';
+  } else if(st.tp==='libre'){
+    document.getElementById('mt').textContent='Reservar este fin de semana';
+    document.getElementById('mp').textContent='Es el 5° fin de semana del mes, libre para quien lo necesite. Lo reservas para tu familia.';
+    document.getElementById('bca').textContent='Reservar';
+    document.getElementById('bca').className='bco recuperar';
   } else if(st.tp==='tomado'&&st.owner===cur){
     document.getElementById('mt').textContent='Recuperar este fin de semana';
     document.getElementById('mp').textContent='Lo volvés a marcar como liberado, disponible para otras familias.';
@@ -441,14 +457,16 @@ function confirmA(){
     promise=fbDel(key);
   } else if(st.tp==='liberado'&&st.fam!==cur){
     promise=fbSet(key,'tomado_'+cur);
+  } else if(st.tp==='libre'){
+    promise=fbSet(key,'tomado_'+cur);
   } else if(st.tp==='tomado'&&st.owner===cur){
     promise=fbSet(key,'liberado');
-  } else if(st.tp==='tomado'&&st.fam===cur){
+  } else if(st.tp==='tomado'&&(st.fam===cur||st.owner===null&&st.fam===cur)){
     promise=fbDel(key);
   } else { return; }
   promise.then(function(){
     fbFetch();
-    showToast(st.tp==='liberado'&&st.fam!==cur?'Fin de semana tomado!':'Listo');
+    showToast(st.tp==='libre'?'Fin de semana reservado!':st.tp==='liberado'&&st.fam!==cur?'Fin de semana tomado!':'Listo');
   }).catch(function(){setSyncStatus('err');showToast('Error al guardar');});
   pend=null;
 }
